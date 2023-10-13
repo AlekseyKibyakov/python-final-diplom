@@ -1,7 +1,12 @@
-django
-djangorestframework
+pytz
+Django
+django-filter
 django-rest-passwordreset
+djangorestframework
 psycopg2-binary
-pyyaml
-ujson
-requests
+pytest
+pytest-cov
+pytest-django
+python-dotenv
+python3-openid
+PyYAML
