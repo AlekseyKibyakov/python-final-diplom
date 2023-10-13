@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
-        fields = ['name', 'url', 'user', 'state', 'filename']
+        fields = ['name', 'url', 'user', 'state']
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
