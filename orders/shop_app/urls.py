@@ -1,5 +1,7 @@
 from django.urls import path
-from .views import RegisterBuyerView, ConfirmEmailView, LoginView, UserProfileView, ProductSearchView, ShopOrdersView, ContactView, UserOrdersView, CartView, UpdatePriceView, ShopStatusView, ShopUpdateView
+from .views import CreateShopView, RegisterBuyerView, ConfirmEmailView, \
+    LoginView, UserProfileView, ProductSearchView, ShopOrdersView, \
+        ContactView, UserOrdersView, CartView, UpdatePriceView, ShopStatusView, ShopUpdateView
 
 urlpatterns = [
     path('register/', RegisterBuyerView.as_view(), name='register'),
@@ -14,4 +16,5 @@ urlpatterns = [
     path('update-price/', UpdatePriceView.as_view(), name='update-price'),
     path('shop-status/', ShopStatusView.as_view(), name='shop-status'),
     path('shop-update/', ShopUpdateView.as_view(), name='shop-update'),
+    path('create-shop/', CreateShopView.as_view(), name='create-shop'),
 ]

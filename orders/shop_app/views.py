@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 
 from orders.settings import EMAIL_HOST_PASSWORD, EMAIL_HOST_USER
+from shop_app.permissions import IsShop
 from .models import Product, Order, OrderItem, ProductInfo, Shop, Contact, ConfirmEmailToken
 from .serializers import UserSerializer, ProductSerializer, OrderSerializer, \
     OrderItemSerializer, ProductInfoSerializer, ShopSerializer, ContactSerializer
@@ -17,11 +18,12 @@ class RegisterBuyerView(APIView):
     def post(self, request, format=None):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
+            user_type = serializer.validated_data.get('type', 'buyer')
             user = User.objects.create_user(
                 email=serializer.validated_data['email'],
                 username=serializer.validated_data['username'],
                 password=serializer.validated_data['password'],
-                type='buyer'
+                type=user_type
             )
             user.save()
             
@@ -121,8 +123,23 @@ class CartView(APIView):
         else:
             return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
+class CreateShopView(APIView):
+    permission_classes = [IsAuthenticated, IsShop]
+
+    def post(self, request, format=None):
+        user = request.user
+        if user.type != 'shop':
+            return Response({"error": "User is not a shop"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = ShopSerializer(data=request.data)
+        if serializer.is_valid():
+            shop = serializer.save(user=user)
+            return Response(ShopSerializer(shop).data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class UpdatePriceView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsShop]
 
     def put(self, request, format=None):
         shop_id = request.data.get('shop_id')
@@ -142,21 +159,20 @@ class UpdatePriceView(APIView):
             return Response({"error": "Shop not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 class ShopStatusView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsShop]
 
     def put(self, request, format=None):
         user = request.user
-        if user.type == 'shop':
-            user.is_active = request.data.get('is_active')
-            user.save()
-            return Response({"message": "Status updated"})
-        else:
-            return Response({"error": "User is not a shop"}, status=status.HTTP_400_BAD_REQUEST)
+        user.is_active = request.data.get('is_active')
+        user.save()
+        return Response({"message": "Status updated"})
+        
 
 class ShopUpdateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsShop]
 
     def put(self, request, format=None):
+        
         shop_id = request.data.get('shop_id')
         shop = Shop.objects.filter(id=shop_id, user=request.user).first()
         if shop:
@@ -170,7 +186,7 @@ class ShopUpdateView(APIView):
             return Response({"error": "Shop not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 class ShopOrdersView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsShop]
 
     def get(self, request, format=None):
         orders = Order.objects.filter(shop__user=request.user)
