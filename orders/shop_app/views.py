@@ -1,13 +1,17 @@
+import os
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
+
+from orders.settings import EMAIL_HOST_PASSWORD, EMAIL_HOST_USER
 from .models import Product, Order, OrderItem, ProductInfo, Shop, Contact, ConfirmEmailToken
 from .serializers import UserSerializer, ProductSerializer, OrderSerializer, \
     OrderItemSerializer, ProductInfoSerializer, ShopSerializer, ContactSerializer
 User = get_user_model()
+from django.core.mail import send_mail
 
 class RegisterBuyerView(APIView):
     def post(self, request, format=None):
@@ -20,6 +24,19 @@ class RegisterBuyerView(APIView):
                 type='buyer'
             )
             user.save()
+            
+            # Создание ключа подтверждения
+            token = ConfirmEmailToken.objects.create(user=user)
+
+            # Отправка сообщения с ключом подтверждения
+            send_mail(
+                'Подтверждение электронной почты',
+                f'Ваш ключ подтверждения: {token.key}',
+                EMAIL_HOST_USER,
+                [user.email],
+                auth_password=EMAIL_HOST_PASSWORD,
+                fail_silently=False,
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
