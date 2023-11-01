@@ -4,7 +4,7 @@ from rest_framework.test import APIClient
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
-from .models import Product, Order
+from .models import Product, Order, Shop
 
 User = get_user_model()
 
