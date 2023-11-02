@@ -45,9 +45,29 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_rest_passwordreset',
     'django_filters',
-
+    
+    'social_django',
+    
     'shop_app',
+    
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.facebook.FacebookOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+# SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('VK_SERVICE_KEY')
+# SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('VK_SECRET_KEY')
+# SOCIAL_AUTH_GITHUB_KEY = os.getenv('GIT_CLIENT_ID')
+# SOCIAL_AUTH_GITHUB_SECRET = os.getenv('GIT_SECRET_KEY')
+# SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('GOOGLE_CLIENT_ID')
+# SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('GOOGLE_SECRET_KEY')
+SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('FB_CLIENT_ID')  
+SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('FB_SECRET_KEY') 
+
+LOGIN_REDIRECT_URL = 'admin'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -57,6 +77,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
 ROOT_URLCONF = 'orders.urls'
@@ -72,6 +94,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
