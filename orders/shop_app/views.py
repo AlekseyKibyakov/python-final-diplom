@@ -17,12 +17,18 @@ from django.core.mail import send_mail
 from drf_spectacular.utils import extend_schema
 
 class RegisterBuyerView(APIView):
+    """
+    Регистрация покупателя.
+    """
     @extend_schema(
         request=UserSerializer,
         responses={status.HTTP_201_CREATED: UserSerializer},
         description="Регистрация покупателя"
     )
     def post(self, request, format=None):
+        """
+        Создает нового пользователя с ролью "buyer".
+        """
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user_type = serializer.validated_data.get('type', 'buyer')
@@ -50,12 +56,18 @@ class RegisterBuyerView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ConfirmEmailView(APIView):
+    """
+    Подтверждение email.
+    """
     @extend_schema(
         request={"key": "string"},
         responses={status.HTTP_200_OK: {"message": "string"}, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
         description="Подтверждение email"
     )
     def post(self, request, format=None):
+        """
+        Подтверждает email пользователя с помощью ключа подтверждения.
+        """
         key = request.data.get('key')
         try:
             token = ConfirmEmailToken.objects.get(key=key)
@@ -67,12 +79,18 @@ class ConfirmEmailView(APIView):
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
+    """
+    Вход в систему.
+    """
     @extend_schema(
         request={"email": "string", "password": "string"},
         responses={status.HTTP_200_OK: {"token": "string"}, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
         description="Вход в систему"
     )
     def post(self, request, format=None):
+        """
+        Проверяет учетные данные пользователя и возвращает токен доступа.
+        """
         email = request.data.get('email')
         password = request.data.get('password')
         user = authenticate(request, email=email, password=password)
@@ -83,6 +101,9 @@ class LoginView(APIView):
             return Response({'error': "Invalid Credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileView(APIView):
+    """
+    Профиль пользователя.
+    """
     permission_classes = [IsAuthenticated]
     
     @extend_schema(
@@ -90,6 +111,9 @@ class UserProfileView(APIView):
         description="Получение профиля пользователя"
     )
     def get(self, request, format=None):
+        """
+        Возвращает профиль текущего пользователя.
+        """
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
@@ -99,6 +123,9 @@ class UserProfileView(APIView):
         description="Обновление профиля пользователя"
     )
     def put(self, request, format=None):
+        """
+        Обновляет профиль текущего пользователя.
+        """
         serializer = UserSerializer(request.user, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -106,17 +133,26 @@ class UserProfileView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ProductSearchView(APIView):
+    """
+    Поиск продуктов.
+    """
     @extend_schema(
         responses={status.HTTP_200_OK: ProductSerializer(many=True)},
         description="Поиск продуктов"
     )
     def get(self, request, format=None):
+        """
+        Выполняет поиск продуктов по заданному запросу.
+        """
         query = request.query_params.get('query', '')
         products = Product.objects.filter(name__icontains=query)
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 
 class CartView(APIView):
+    """
+    Корзина пользователя.
+    """
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -124,6 +160,9 @@ class CartView(APIView):
         description="Получение корзины пользователя"
     )
     def get(self, request, format=None):
+        """
+        Возвращает корзину пользователя.
+        """
         order = Order.objects.filter(user=request.user, state='cart').first()
         if order:
             serializer = OrderSerializer(order)
@@ -137,6 +176,9 @@ class CartView(APIView):
         description="Добавление продукта в корзину"
     )
     def post(self, request, format=None):
+        """
+        Добавляет продукт в корзину пользователя.
+        """
         product_id = request.data.get('product_id')
         quantity = request.data.get('quantity', 1)
         product = Product.objects.filter(id=product_id).first()
@@ -155,6 +197,9 @@ class CartView(APIView):
         description="Удаление продукта из корзины"
     )
     def delete(self, request, format=None):
+        """
+        Удаляет продукт из корзины пользователя.
+        """
         product_id = request.data.get('product_id')
         order = Order.objects.filter(user=request.user, state='cart').first()
         if order:
@@ -176,6 +221,9 @@ class CreateShopView(APIView):
         description="Создание магазина"
     )
     def post(self, request, format=None):
+        """
+        Создает новый магазин для авторизованного пользователя типа "shop".
+        """
         user = request.user
         if user.type != 'shop':
             return Response({"error": "User is not a shop"}, status=status.HTTP_400_BAD_REQUEST)
@@ -203,6 +251,9 @@ class UpdatePriceView(APIView):
         description="Обновление цен на товары"
     )
     def put(self, request, format=None):
+        """
+        Обновляет информацию о ценах на товары для определенного магазина.
+        """
         shop_id = request.data.get('shop_id')
         product_infos = request.data.get('product_infos', [])
         shop = Shop.objects.filter(id=shop_id).first()
@@ -228,6 +279,9 @@ class ShopStatusView(APIView):
         description="Обновление статуса магазина"
     )
     def put(self, request, format=None):
+        """
+        Обновляет статус магазина пользователя.
+        """
         user = request.user
         user.is_active = request.data.get('is_active')
         user.save()
@@ -243,7 +297,9 @@ class ShopUpdateView(APIView):
         description="Обновление информации о магазине"
     )
     def put(self, request, format=None):
-        
+        """
+        Обновляет информацию о магазине.
+        """
         shop_id = request.data.get('shop_id')
         shop = Shop.objects.filter(id=shop_id, user=request.user).first()
         if shop:
@@ -264,6 +320,9 @@ class ShopOrdersView(APIView):
         description="Получение заказов магазина"
     )
     def get(self, request, format=None):
+        """
+        Получает список заказов для магазина текущего пользователя.
+        """
         orders = Order.objects.filter(shop__user=request.user)
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
@@ -276,6 +335,9 @@ class ContactView(APIView):
         description="Получение контактов пользователя"
     )
     def get(self, request, format=None):
+        """
+        Получает список контактов текущего пользователя.
+        """
         contacts = Contact.objects.filter(user=request.user)
         serializer = ContactSerializer(contacts, many=True)
         return Response(serializer.data)
@@ -286,6 +348,9 @@ class ContactView(APIView):
         description="Создание контакта пользователя"
     )
     def post(self, request, format=None):
+        """
+        Создает новый контакт для пользователя.
+        """
         serializer = ContactSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
@@ -301,6 +366,9 @@ class UserOrdersView(APIView):
         description="Получение заказов пользователя"
     )
     def get(self, request, format=None):
+        """
+        Получает список заказов пользователя.
+        """
         orders = Order.objects.filter(user=request.user)
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
@@ -311,6 +379,9 @@ class UserOrdersView(APIView):
         description="Создание заказа пользователя"
     )
     def post(self, request, format=None):
+        """
+        Создает новый заказ для пользователя.
+        """
         serializer = OrderSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
