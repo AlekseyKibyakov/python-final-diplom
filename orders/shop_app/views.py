@@ -14,7 +14,14 @@ from .serializers import UserSerializer, ProductSerializer, OrderSerializer, \
 User = get_user_model()
 from django.core.mail import send_mail
 
+from drf_spectacular.utils import extend_schema
+
 class RegisterBuyerView(APIView):
+    @extend_schema(
+        request=UserSerializer,
+        responses={status.HTTP_201_CREATED: UserSerializer},
+        description="Регистрация покупателя"
+    )
     def post(self, request, format=None):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -43,6 +50,11 @@ class RegisterBuyerView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ConfirmEmailView(APIView):
+    @extend_schema(
+        request={"key": "string"},
+        responses={status.HTTP_200_OK: {"message": "string"}, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
+        description="Подтверждение email"
+    )
     def post(self, request, format=None):
         key = request.data.get('key')
         try:
@@ -55,6 +67,11 @@ class ConfirmEmailView(APIView):
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
+    @extend_schema(
+        request={"email": "string", "password": "string"},
+        responses={status.HTTP_200_OK: {"token": "string"}, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
+        description="Вход в систему"
+    )
     def post(self, request, format=None):
         email = request.data.get('email')
         password = request.data.get('password')
@@ -67,11 +84,20 @@ class LoginView(APIView):
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
+    @extend_schema(
+        responses={status.HTTP_200_OK: UserSerializer},
+        description="Получение профиля пользователя"
+    )
     def get(self, request, format=None):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
+    @extend_schema(
+        request=UserSerializer,
+        responses={status.HTTP_200_OK: UserSerializer, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
+        description="Обновление профиля пользователя"
+    )
     def put(self, request, format=None):
         serializer = UserSerializer(request.user, data=request.data)
         if serializer.is_valid():
@@ -80,6 +106,10 @@ class UserProfileView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ProductSearchView(APIView):
+    @extend_schema(
+        responses={status.HTTP_200_OK: ProductSerializer(many=True)},
+        description="Поиск продуктов"
+    )
     def get(self, request, format=None):
         query = request.query_params.get('query', '')
         products = Product.objects.filter(name__icontains=query)
@@ -89,6 +119,10 @@ class ProductSearchView(APIView):
 class CartView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        responses={status.HTTP_200_OK: OrderSerializer},
+        description="Получение корзины пользователя"
+    )
     def get(self, request, format=None):
         order = Order.objects.filter(user=request.user, state='cart').first()
         if order:
@@ -97,6 +131,11 @@ class CartView(APIView):
         else:
             return Response({"message": "Cart is empty"})
 
+    @extend_schema(
+        request={"product_id": "integer", "quantity": "integer"},
+        responses={status.HTTP_200_OK: {"message": "string"}, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
+        description="Добавление продукта в корзину"
+    )
     def post(self, request, format=None):
         product_id = request.data.get('product_id')
         quantity = request.data.get('quantity', 1)
@@ -110,6 +149,11 @@ class CartView(APIView):
         else:
             return Response({"error": "Product not found"}, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        request={"product_id": "integer"},
+        responses={status.HTTP_200_OK: {"message": "string"}, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
+        description="Удаление продукта из корзины"
+    )
     def delete(self, request, format=None):
         product_id = request.data.get('product_id')
         order = Order.objects.filter(user=request.user, state='cart').first()
@@ -126,6 +170,11 @@ class CartView(APIView):
 class CreateShopView(APIView):
     permission_classes = [IsAuthenticated, IsShop]
 
+    @extend_schema(
+        request=ShopSerializer,
+        responses={status.HTTP_201_CREATED: ShopSerializer},
+        description="Создание магазина"
+    )
     def post(self, request, format=None):
         user = request.user
         if user.type != 'shop':
@@ -141,6 +190,18 @@ class CreateShopView(APIView):
 class UpdatePriceView(APIView):
     permission_classes = [IsAuthenticated, IsShop]
 
+    @extend_schema(
+        request={
+            "shop_id": "integer",
+            "product_infos": [{
+                "id": "integer",
+                "quantity": "integer",
+                "other_field": "string"  # Дополнительные поля сериализатора
+            }]
+        },
+        responses={status.HTTP_200_OK: {"message": "string"}, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
+        description="Обновление цен на товары"
+    )
     def put(self, request, format=None):
         shop_id = request.data.get('shop_id')
         product_infos = request.data.get('product_infos', [])
@@ -161,6 +222,11 @@ class UpdatePriceView(APIView):
 class ShopStatusView(APIView):
     permission_classes = [IsAuthenticated, IsShop]
 
+    @extend_schema(
+        request={"is_active": "boolean"},
+        responses={status.HTTP_200_OK: {"message": "string"}},
+        description="Обновление статуса магазина"
+    )
     def put(self, request, format=None):
         user = request.user
         user.is_active = request.data.get('is_active')
@@ -171,6 +237,11 @@ class ShopStatusView(APIView):
 class ShopUpdateView(APIView):
     permission_classes = [IsAuthenticated, IsShop]
 
+    @extend_schema(
+        request={"shop_id": "integer"},
+        responses={status.HTTP_200_OK: ShopSerializer, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
+        description="Обновление информации о магазине"
+    )
     def put(self, request, format=None):
         
         shop_id = request.data.get('shop_id')
@@ -188,6 +259,10 @@ class ShopUpdateView(APIView):
 class ShopOrdersView(APIView):
     permission_classes = [IsAuthenticated, IsShop]
 
+    @extend_schema(
+        responses={status.HTTP_200_OK: OrderSerializer(many=True)},
+        description="Получение заказов магазина"
+    )
     def get(self, request, format=None):
         orders = Order.objects.filter(shop__user=request.user)
         serializer = OrderSerializer(orders, many=True)
@@ -196,11 +271,20 @@ class ShopOrdersView(APIView):
 class ContactView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        responses={status.HTTP_200_OK: ContactSerializer(many=True)},
+        description="Получение контактов пользователя"
+    )
     def get(self, request, format=None):
         contacts = Contact.objects.filter(user=request.user)
         serializer = ContactSerializer(contacts, many=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        request=ContactSerializer,
+        responses={status.HTTP_201_CREATED: ContactSerializer, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
+        description="Создание контакта пользователя"
+    )
     def post(self, request, format=None):
         serializer = ContactSerializer(data=request.data)
         if serializer.is_valid():
@@ -212,11 +296,20 @@ class ContactView(APIView):
 class UserOrdersView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        responses={status.HTTP_200_OK: OrderSerializer(many=True)},
+        description="Получение заказов пользователя"
+    )
     def get(self, request, format=None):
         orders = Order.objects.filter(user=request.user)
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        request=OrderSerializer,
+        responses={status.HTTP_200_OK: OrderSerializer, status.HTTP_400_BAD_REQUEST: {"error": "string"}},
+        description="Создание заказа пользователя"
+    )
     def post(self, request, format=None):
         serializer = OrderSerializer(data=request.data)
         if serializer.is_valid():

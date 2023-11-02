@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'django_filters',
     
     'social_django',
-    
+    'drf_spectacular',
     'shop_app',
     
 ]
@@ -68,6 +68,12 @@ SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('FB_CLIENT_ID')
 SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('FB_SECRET_KEY') 
 
 LOGIN_REDIRECT_URL = 'admin'
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Магазина',
+    'DESCRIPTION': 'API Сервиса заказа товаров для розничных сетей',
+    'VERSION': '1.0.0',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -182,9 +188,12 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.BrowsableAPIRenderer',
 
     ),
-
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES':
         ['rest_framework.authentication.TokenAuthentication'],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
