@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'baton',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -50,22 +51,24 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'shop_app',
     
+    'baton.autodiscover',
+    
 ]
 
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.facebook.FacebookOAuth2',
+    'social_core.backends.github.GithubOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
 SOCIAL_AUTH_JSONFIELD_ENABLED = True
 # SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('VK_SERVICE_KEY')
 # SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('VK_SECRET_KEY')
-# SOCIAL_AUTH_GITHUB_KEY = os.getenv('GIT_CLIENT_ID')
-# SOCIAL_AUTH_GITHUB_SECRET = os.getenv('GIT_SECRET_KEY')
+SOCIAL_AUTH_GITHUB_KEY = os.getenv('GIT_CLIENT_ID')
+SOCIAL_AUTH_GITHUB_SECRET = os.getenv('GIT_SECRET_KEY')
 # SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('GOOGLE_CLIENT_ID')
 # SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('GOOGLE_SECRET_KEY')
-SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('FB_CLIENT_ID')  
-SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('FB_SECRET_KEY') 
+# SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('FB_CLIENT_ID')  
+# SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('FB_SECRET_KEY') 
 
 LOGIN_REDIRECT_URL = 'admin'
 
@@ -211,8 +214,61 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'user': '15/minute',
         'anon': '5/minute',
-
     }
+}
 
-
+BATON = {
+    'SITE_HEADER': 'API Shop',
+    'SITE_TITLE': 'API Shop',
+    'INDEX_TITLE': 'Administration API Shop',
+    'SUPPORT_HREF': 'https://github.com/AlekseyKibyakov/python-final-diplom',
+    'COPYRIGHT': 'copyright © 2017 <a href="https://www.otto.to.it">Otto srl</a>', # noqa
+    'POWERED_BY': '<a href="https://github.com/AlekseyKibyakov/python-final-diplom">Kibyakov</a>',
+    'CONFIRM_UNSAVED_CHANGES': True,
+    'SHOW_MULTIPART_UPLOADING': True,
+    'ENABLE_IMAGES_PREVIEW': True,
+    'CHANGELIST_FILTERS_IN_MODAL': True,
+    'CHANGELIST_FILTERS_ALWAYS_OPEN': False,
+    'CHANGELIST_FILTERS_FORM': True,
+    'COLLAPSABLE_USER_AREA': False,
+    'MENU_ALWAYS_COLLAPSED': False,
+    'MENU_TITLE': 'Menu',
+    'MESSAGES_TOASTS': False,
+    'GRAVATAR_DEFAULT_IMG': 'retro',
+    'GRAVATAR_ENABLED': True,
+    'FORCE_THEME': None,
+    'LOGIN_SPLASH': 'https://i.ytimg.com/vi/PaQuuB88SVY/maxresdefault.jpg',
+    'SEARCH_FIELD': {
+        'label': 'Search contents...',
+        'url': '/search/',
+    },
+    'MENU': (
+        { 'type': 'title', 'label': 'main', 'apps': ('auth', 'shop_app') },
+        
+        {
+            'type': 'app',
+            'name': 'shop_app',
+            'label': 'Пользователи',
+            'default_open': True,
+            'models': (
+                # {
+                #     'name': 'shop_app.models.user',
+                #     'label': 'User'
+                # },
+                {
+                    'name': 'shop_app.models.Shop',
+                    'label': 'Shop'
+                },
+            )
+        },
+        {
+            'type': 'model',
+            'name': 'User',
+            'app': 'shop_app'
+        }
+    ),
+    # 'ANALYTICS': {
+    #     'CREDENTIALS': os.path.join(BASE_DIR, 'credentials.json'),
+    #     'VIEW_ID': '12345678',
+    # }
 }
